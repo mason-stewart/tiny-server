@@ -3,7 +3,7 @@ Nothing to see here, just a little Express app with a dummy-simple CRUD API usin
 
 Just meant for lightweight local dev and messing around. Obviously not fit for prod :D
 
-### Dependencies
+#### Dependencies
 Run `npm install` and `bower update` to get your dependencies ready. `./node_modules` is in the `.gitignore`, Yeoman-style :)
 
 #### Usage
