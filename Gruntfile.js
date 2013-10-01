@@ -3,7 +3,7 @@
 var request = require('request');
 
 module.exports = function (grunt) {
-  var reloadPort = 35729, files;
+  var reloadPort = 35720, files;
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
