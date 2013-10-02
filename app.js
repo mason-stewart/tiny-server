@@ -75,7 +75,7 @@ app.get('/collections/:collectionName', function(req, res) {
 app.post('/collections/:collectionName', function(req, res) {
   req.collection.insert(req.body, {}, function(e, results){
     if (e) return next(e)
-    res.send(results)
+    res.send(results[0])
   })
 })
 
