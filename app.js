@@ -90,9 +90,12 @@ app.get('/collections/:collectionName/:id', function(req, res) {
 
 // PUT /collections/:collectionName/:id
 app.put('/collections/:collectionName/:id', function(req, res) {
+
+  // backbone sends the _id in the payload, but mongo doesn't wan it in the $set
+  delete req.body._id
+
   req.collection.update({_id: req.collection.id(req.params.id)}, {$set:req.body}, {safe:true, multi:false}, function(e, result){
-    if (e) return next(e)
-    res.send((result===1)?{msg:'success'}:{msg:'error'})
+    res.send((result===1)? 200 : 404 )
   })
 })
 
