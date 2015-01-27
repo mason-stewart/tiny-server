@@ -1,11 +1,18 @@
 // require necessary modules
 var express = require('express')
-  , mongoskin = require('mongoskin')
+  //, mongoskin = require('mongoskin')
   , routes = require('./routes')
+  , public = require('./routes/public')
+  , secure = require('./routes/secure')
+  , morgan = require('morgan')
+  , favicon = require('serve-favicon')
+  , methodOverride = require('method-override')
+  , errorhandler = require('errorhandler')
   , http = require('http')
   , path = require('path')
-  , db = mongoskin.db((process.env.MONGOLAB_URI || 'localhost:27017/test'), {safe:true});
-
+  , bodyParser = require('body-parser')
+  // , db = mongoskin.db((process.env.MONGOLAB_URI || 'localhost:27017/test'), {safe:true});
+  //, db = mongoskin.db('mongodb://notmason:not*this-password0@ds031561.mongolab.com:31561/safetypizza', {safe:true});
 
 // get an instance of express
 var app = express();
@@ -25,23 +32,31 @@ var allowCrossDomain = function(req, res, next) {
 };
 
 // configure it
-app.configure(function(){
+//app.configure(function(){
   app.use(allowCrossDomain);
   app.set('port', process.env.PORT || 3000);
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
-  app.use(express.favicon());
-  app.use(express.logger('dev'));
-  app.use(express.bodyParser());
-  app.use(express.methodOverride());
-  app.use(app.router);
+  //app.use(express.favicon());
+  app.use(favicon(__dirname + '/public/favicon.ico'));
+  //app.use(express.logger('dev'));
+  app.use(morgan('dev'));
+  app.use(bodyParser.urlencoded({extended: false}));
+  app.use(bodyParser.json());
+  app.use(methodOverride());
+  //app.use(express.methodOverride());
+  //app.use(app.router);
   app.use(express.static(path.join(__dirname, 'public')));
-});
+//});
 
 // dev config
-app.configure('development', function(){
-  app.use(express.errorHandler());
-});
+//app.configure('development', function(){
+//  app.use(express.errorHandler());
+//});
+var env = process.env.NODE_ENV || 'development';
+if ('development' == env) {
+  app.use(errorhandler());
+}
 
 // PLEASE NOTE this turns on CORS for everything, everywhere!
 // Almost certainly not what you want to do in production.
@@ -54,6 +69,12 @@ app.configure('development', function(){
 // index route
 app.get('/', routes.index);
 
+// public collections route
+app.use('/collections', public);
+// secure collections route
+app.use('/secure/collections', secure);
+
+/*
 // Setup the collectionName param for requests
 app.param('collectionName', function(req, res, next, collectionName){
   req.collection = db.collection(collectionName)
@@ -188,7 +209,7 @@ app.del('/collections/:collectionName/:id', function(req, res) {
 })
 
 // end API endpoints
-
+*/
 // run the server
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
