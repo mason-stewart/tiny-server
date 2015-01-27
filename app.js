@@ -1,7 +1,7 @@
 var express = require('express')
-  , rtIndex  = require('./routes')
-  , rtPublic  = require('./routes/public')
-  , rtSecure  = require('./routes/secure')
+  , routeIndex  = require('./routes')
+  , routePublic  = require('./routes/public')
+  , routeSecure  = require('./routes/secure')
   , morgan  = require('morgan')
   , favicon = require('serve-favicon')
   , methodOverride = require('method-override')
@@ -17,12 +17,8 @@ var allowCrossDomain = function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
-
     // intercept OPTIONS method
-    if ('OPTIONS' == req.method) {
-      res.send(200);
-    }
-    else { next(); }
+    ('OPTIONS' == req.method) ? res.send(200) : next(); 
 };
 
 // Configuration
@@ -45,11 +41,11 @@ if ('development' == env) {
 
 // Routes
 //  |-- Index
-app.get('/', rtIndex.index);
+app.get('/', routeIndex.index);
 //  |-- Insecure API
-app.use('/collections', rtPublic);
+app.use('/collections', routePublic);
 //  |-- "Secured" API
-app.use('/secure/collections', rtSecure);
+app.use('/secure/collections', routeSecure);
 
 // Light It Up!
 http.createServer(app).listen(app.get('port'), function(){

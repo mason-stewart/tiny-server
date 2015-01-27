@@ -50,7 +50,9 @@ router.route('/users')
   .post(function(req, res, next) {
     var newUser = {};
     if (!req.body.username || !req.body.email) {
+			res.status(400);
       res.send("Key requests must contain both a 'username' and an 'email' value. Please check your data and try again.\r\n");
+			return;
     }
     generateSafeKey(3, function(safeKey) {
       newUser.username = req.body.username;
@@ -83,9 +85,17 @@ router.route('/:collectionName')
 
   // POST /collections/:collectionName
   .post(function(req, res, next) {
-    if (!req.query.api_key) { res.send("Please resend with an API key!\r\n"); }
+    if (!req.query.api_key) { 
+			res.status(401);
+			res.send("Please resend with an API key!\r\n"); 
+			return;
+		}
     getUserFromKey(req.query.api_key, function(userName) {
-      if (!userName) { res.send("Invalid API Key!\r\n"); }
+      if (!userName) { 
+				res.status(403);
+				res.send("Invalid API Key!\r\n"); 
+				return;
+			}
       console.log(userName);
       req.body.author = userName;
       req.collection.insert(req.body, {}, function(e, results){
@@ -109,12 +119,14 @@ router.route('/:collectionName/:id')
   // PUT /collections/:collectionName/:id
   .put(function(req, res) {
     if (!req.query.api_key) {
-      res.send("You can't do that witout an API key!\r\n");
+			res.status(401);
+      res.send("You can't do that without an API key!\r\n");
       return;
     }
     getUserFromKey(req.query.api_key, function(userName) {
       req.collection.find({ _id: req.collection.id(req.params.id) }, {author:1}).toArray(function(e, results) {
         if (!results[0] || results[0].author !== userName) {
+					res.status(403);
           res.send("You don't have permission to alter someone else's data!\r\n");
           return;
         }
@@ -129,17 +141,18 @@ router.route('/:collectionName/:id')
   // DELETE /collections/:collectionName
   .delete(function(req, res) {
     if (!req.query.api_key) {
+			res.status(401);
       res.send("You can't do that without an API key!\r\n");
       return;
     }
     getUserFromKey(req.query.api_key, function(userName) {
       req.collection.find({ _id: req.collection.id(req.params.id) }, {author:1}).toArray(function (e, results) {
         if (!results[0] || results[0].author !== userName) {
+					res.status(403);
           res.send("You don't have permission to delete someone else's data!\r\n");
           return;
         }
         req.collection.remove({_id: req.collection.id(req.params.id)}, function(e, result){
-          if (e) { return next(e); }
           res.send((result===1)?{msg:'success'}:{msg:'error'});
         });
       });
