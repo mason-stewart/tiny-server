@@ -1,8 +1,10 @@
 var express   = require('express'),
     mongoskin = require('mongoskin'),
     router    = express.Router(),
-    db = mongoskin.db('mongodb://notmason:not*this-password0@ds031561.mongolab.com:31561/safetypizza', {safe:true});
+    db = mongoskin.db((process.env.MONGOLAB_URI || 'localhost:27017/test'), {safe: true});
 
+    // Thanks to http://webapplog.com/tutorial-node-js-and-mongodb-json-rest-api-server-with-mongoskin-and-express-js/
+    // for the cool help
 
 // Helper Methods
 var wordBank = ['veggie', 'ham', 'bacon', 'marinara', 'mushroom', 'extra', 'cheese', 'pineapple', 'easy-on', 'pepperoni', 'sausage', 'onion', 'lovers', 'supreme'];
@@ -40,6 +42,7 @@ router.param('collectionName', function(req, res, next, collectionName) {
 
 // Catch the 'users' routes first to prevent dumping user data.
 router.route('/users')
+
   // GET /collections/users (/dev/null)
   .get(function(req, res, next) { res.send(404); })
 
@@ -69,6 +72,7 @@ router.route('/users')
   });
 
 router.route('/:collectionName')
+
   // GET /collections/:collectionName
   .get(function(req, res, next) {
     req.collection.find({},{limit:10, sort: [['_id',-1]]}).toArray(function(e, results){
@@ -93,6 +97,7 @@ router.route('/:collectionName')
 
 
 router.route('/:collectionName/:id')
+
   // GET /collections/:collectionName/:id
   .get(function(req, res) {
     req.collection.find({_id: req.collection.id(req.params.id)}, function(e, results){
