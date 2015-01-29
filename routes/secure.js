@@ -1,6 +1,6 @@
 var express   = require('express'),
     mongoskin = require('mongoskin'),
-		keymaker  = require('./word-key/index'),
+    keymaker  = require('word-key/index.js'),
     router    = express.Router(),
     db = mongoskin.db((process.env.MONGOLAB_URI || 'localhost:27017/test'), {safe: true});
 
@@ -11,13 +11,14 @@ var express   = require('express'),
 var wordBank = ['veggie', 'ham', 'bacon', 'marinara', 'mushroom', 'extra', 'cheese', 'pineapple', 'easy-on', 'pepperoni', 'sausage', 'onion', 'lovers', 'supreme'];
 
 var generateSafeKey = function(keyLength, callback) {
-	var myKey = keymaker.getKey(keyLength, wordBank);
-	db.collection('users').find({apiKey: myKey}, {_id:1}).toArray(function(e, result, next) {
-		if (result.length === 0) {
-			callback(myKey);
-		} else {
-			generateSafeKey(keyLength, callback);
-		}
+  var myKey = keymaker.getKey(keyLength, wordBank);
+  db.collection('users').find({apiKey: myKey}, {_id:1}).toArray(function(e, result, next) {
+    if (result.length === 0) {
+      callback(myKey);
+    } else {
+      generateSafeKey(keyLength, callback);
+    }
+  });
 };
 
 var getUserFromKey = function(key, callback) {
