@@ -1,0 +1,6 @@
+{
+  "name": "Tiny Server",
+  "description": "A tiny server meant for lightweight local dev and messing around.",
+  "repository": "https://github.com/masondesu/tiny-server",
+  "addons": ["mongolab"]
+}
