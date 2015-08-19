@@ -35,16 +35,19 @@ var express   = require('express'),
     .get(function(req, res, next) {
       req.collection.findOne({_id: req.collection.id(req.params.id)}, function(e, result){
         if (e) { return next(e); }
-        res.send(result)
-      })
+        res.send(result);
+      });
     })
 
     // PUT /collections/:collectionName/:id
     .put(function(req, res) {
       delete req.body._id; //<-- backbone sends the _id in the payload, but mongo doesn't wan it in the $set (--@masondesu)
       req.collection.update({_id: req.collection.id(req.params.id)}, {$set:req.body}, {safe:true, multi:false}, function(e, result){
-        res.send((result===1)? 200 : 404 )
-      })
+        req.collection.findOne({_id: req.collection.id(req.params.id)}, function(e, result){
+          if (e) { return next(e); }
+          res.send(result);
+        });
+      });
     })
 
     // DELETE /collections/:collectionName

@@ -1,6 +1,6 @@
 var express   = require('express'),
     mongoskin = require('mongoskin'),
-    keymaker  = require('word-key/index.js'),
+    keymaker  = require('../word-key/index.js'),
     router    = express.Router(),
     db = mongoskin.db((process.env.MONGOLAB_URI || 'localhost:27017/test'), {safe: true});
 
@@ -83,15 +83,15 @@ router.route('/:collectionName')
 
   // POST /collections/:collectionName
   .post(function(req, res, next) {
-    if (!req.query.api_key) { 
+    if (!req.query.api_key) {
 			res.status(401);
-			res.send("Please resend with an API key!\r\n"); 
+			res.send("Please resend with an API key!\r\n");
 			return;
 		}
     getUserFromKey(req.query.api_key, function(userName) {
-      if (!userName) { 
+      if (!userName) {
 				res.status(403);
-				res.send("Invalid API Key!\r\n"); 
+				res.send("Invalid API Key!\r\n");
 				return;
 			}
       console.log(userName);
@@ -130,7 +130,10 @@ router.route('/:collectionName/:id')
         }
         delete req.body._id; // <-- backbone sends the _id in the payload, but mongo doesn't wan it in the $set (-- @masondesu)
         req.collection.update({_id: req.collection.id(req.params.id)}, {$set:req.body}, {safe:true, multi:false}, function(e, result){
-          res.send((result===1)? 200 : 404 );
+          req.collection.findOne({_id: req.collection.id(req.params.id)}, function(e, result){
+            if (e) { return next(e); }
+            res.send(result);
+          });
         });
       });
     });
