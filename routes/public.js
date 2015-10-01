@@ -1,7 +1,7 @@
 var express   = require('express'),
     mongoskin = require('mongoskin'),
     router    = express.Router(),
-    db = mongoskin.db((process.env.MONGOLAB_URI || 'localhost:27017/test'), {safe: true});
+    db = mongoskin.db((process.env.MONGOLAB_URI || 'mongodb://localhost:27017/test'), {safe: true});
 
     // Thanks to http://webapplog.com/tutorial-node-js-and-mongodb-json-rest-api-server-with-mongoskin-and-express-js/
     // for the cool help
@@ -25,7 +25,7 @@ var express   = require('express'),
     .post(function(req, res, next) {
       req.collection.insert(req.body, {}, function(e, results, next){
         if (e) { return next(e); }
-        res.send(results[0]);
+        res.send(results.ops[0]);
       });
     });
 
