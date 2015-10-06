@@ -23,7 +23,7 @@ var express   = require('express'),
 
   // POST /collections/:collectionName
     .post(function(req, res, next) {
-      req.collection.insert(req.body, {}, function(e, results, next){
+      req.collection.insert(req.body, {}, function(e, results){
         if (e) { return next(e); }
         res.send(results.ops[0]);
       });
