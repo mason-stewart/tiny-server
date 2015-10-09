@@ -1,7 +1,7 @@
 var express   = require('express'),
     mongoskin = require('mongoskin'),
     router    = express.Router(),
-    db = mongoskin.db((process.env.MONGOLAB_URI || 'localhost:27017/test'), {safe: true});
+    db = mongoskin.db((process.env.MONGOLAB_URI || 'mongodb://localhost:27017/test'), {safe: true});
 
     // Thanks to http://webapplog.com/tutorial-node-js-and-mongodb-json-rest-api-server-with-mongoskin-and-express-js/
     // for the cool help
@@ -23,9 +23,9 @@ var express   = require('express'),
 
   // POST /collections/:collectionName
     .post(function(req, res, next) {
-      req.collection.insert(req.body, {}, function(e, results, next){
+      req.collection.insert(req.body, {}, function(e, results){
         if (e) { return next(e); }
-        res.send(results[0]);
+        res.send(results.ops[0]);
       });
     });
 
@@ -33,17 +33,18 @@ var express   = require('express'),
 
     // GET /collections/:collectionName/:id
     .get(function(req, res, next) {
-      req.collection.findOne({_id: req.collection.id(req.params.id)}, function(e, result){
+      req.collection.findById(req.params.id, function(e, result){
         if (e) { return next(e); }
         res.send(result);
       });
     })
 
     // PUT /collections/:collectionName/:id
-    .put(function(req, res) {
+    .put(function(req, res, next) {
       delete req.body._id; //<-- backbone sends the _id in the payload, but mongo doesn't wan it in the $set (--@masondesu)
-      req.collection.update({_id: req.collection.id(req.params.id)}, {$set:req.body}, {safe:true, multi:false}, function(e, result){
-        req.collection.findOne({_id: req.collection.id(req.params.id)}, function(e, result){
+      req.collection.updateById(req.params.id, {$set:req.body}, function(e, result){
+        if (e) { return next(e); }
+        req.collection.findById(req.params.id, function(e, result){
           if (e) { return next(e); }
           res.send(result);
         });
@@ -52,7 +53,7 @@ var express   = require('express'),
 
     // DELETE /collections/:collectionName
     .delete(function(req, res, next) {
-      req.collection.remove({_id: req.collection.id(req.params.id)}, function(e, result){
+      req.collection.removeById(req.params.id, function(e, result){
         if (e) { return next(e); }
         res.send((result===1)?{msg:'success'}:{msg:'error'});
       });
