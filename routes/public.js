@@ -1,13 +1,13 @@
 var express   = require('express'),
-    mongoskin = require('mongoskin'),
     router    = express.Router(),
-    db = mongoskin.db((process.env.MONGOLAB_URI || 'mongodb://localhost:27017/test'), {safe: true});
+    db = require('./../db'),
+    ObjectId = require('mongodb').ObjectID
 
     // Thanks to http://webapplog.com/tutorial-node-js-and-mongodb-json-rest-api-server-with-mongoskin-and-express-js/
     // for the cool help
 
   router.param('collectionName', function(req, res, next, collectionName) {
-    req.collection = db.collection(collectionName);
+    req.collection = db.get().collection(collectionName);
     next();
   });
 
@@ -33,9 +33,11 @@ var express   = require('express'),
 
     // GET /collections/:collectionName/:id
     .get(function(req, res, next) {
-      req.collection.findById(req.params.id, function(e, result){
+      console.log(req.collection);
+      console.log(req.params.id);
+      req.collection.find({"_id": ObjectId(req.params.id)}).toArray(function(e, result){
         if (e) { return next(e); }
-        res.send(result);
+        res.send(result[0]);
       });
     })
 

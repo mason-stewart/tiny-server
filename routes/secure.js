@@ -1,8 +1,7 @@
 var express   = require('express'),
-    mongoskin = require('mongoskin'),
     keymaker  = require('../word-key/index.js'),
     router    = express.Router(),
-    db = mongoskin.db((process.env.MONGOLAB_URI || 'localhost:27017/test'), {safe: true});
+    db = require('./../db');
 
     // Thanks to http://webapplog.com/tutorial-node-js-and-mongodb-json-rest-api-server-with-mongoskin-and-express-js/
     // for the cool help
