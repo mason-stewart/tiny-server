@@ -58,8 +58,5 @@ db.connect(process.env.MONGOLAB_URI || 'mongodb://localhost:27017/test', functio
     http.createServer(app).listen(app.get('port'), function(){
       console.log("Express server listening on port " + app.get('port'));
     });
-    // app.listen(function() {
-    //   console.log('Listening on port ' + app.get('port'))
-    // })
   }
 })

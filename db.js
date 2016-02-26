@@ -9,7 +9,6 @@ exports.connect = function(url, done) {
   if (state.db) return done();
 
   MongoClient.connect(url, function(err, db) {
-    console.log('err connecting to mongo', err);
     if (err) return done(err);
     state.db = db;
     done();
