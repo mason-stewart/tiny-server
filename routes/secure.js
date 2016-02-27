@@ -1,8 +1,8 @@
 var express   = require('express'),
-    mongoskin = require('mongoskin'),
     keymaker  = require('../word-key/index.js'),
     router    = express.Router(),
-    db = mongoskin.db((process.env.MONGOLAB_URI || 'localhost:27017/test'), {safe: true});
+    db = require('./../db'),
+    ObjectId = require('mongodb').ObjectID;
 
     // Thanks to http://webapplog.com/tutorial-node-js-and-mongodb-json-rest-api-server-with-mongoskin-and-express-js/
     // for the cool help
@@ -12,7 +12,7 @@ var wordBank = ['veggie', 'ham', 'bacon', 'marinara', 'mushroom', 'extra', 'chee
 
 var generateSafeKey = function(keyLength, callback) {
   var myKey = keymaker.getKey(keyLength, wordBank);
-  db.collection('users').find({apiKey: myKey}, {_id:1}).toArray(function(e, result, next) {
+  db.get().collection('users').find({apiKey: myKey}, {_id:1}).toArray(function(e, result, next) {
     if (result.length === 0) {
       callback(myKey);
     } else {
@@ -22,7 +22,7 @@ var generateSafeKey = function(keyLength, callback) {
 };
 
 var getUserFromKey = function(key, callback) {
-  db.collection('users').find({apiKey: key}, {username:1}).toArray(function(e, result, next) {
+  db.get().collection('users').find({apiKey: key}, {username:1}).toArray(function(e, result, next) {
     if (result.length !== 0) {
       callback(result[0].username);
     } else {
@@ -34,7 +34,7 @@ var getUserFromKey = function(key, callback) {
 
 // Routing
 router.param('collectionName', function(req, res, next, collectionName) {
-  req.collection = db.collection(collectionName);
+  req.collection = db.get().collection(collectionName);
   next();
 });
 
@@ -56,17 +56,18 @@ router.route('/users')
       newUser.username = req.body.username;
       newUser.email = req.body.email;
       newUser.apiKey = safeKey;
-      db.collection('users').insert(newUser, {}, function(e, results) {
+      db.get().collection('users').insert(newUser, {}, function(e, results) {
+        console.log(results);
         if (e) { return next(e); }
         /**
          * "Pretty" API Key notification (optional)
          *
-        var notifier = "Your API Key is '" + results[0].apiKey + "'!\r\n";
+        var notifier = "Your API Key is '" + results.ops[0].apiKey + "'!\r\n";
         notifier += "Make sure you write this in a safe place - you'll need it!\r\n";
-        console.log(results[0]);
+        console.log(results.ops[0]);
         res.send(notifier);
          */
-        res.send(results[0]);
+        res.send(results.ops[0]);
       });
     });
   });
@@ -108,9 +109,9 @@ router.route('/:collectionName/:id')
 
   // GET /collections/:collectionName/:id
   .get(function(req, res) {
-    req.collection.find({_id: req.collection.id(req.params.id)}, function(e, results){
+    req.collection.find({"_id": ObjectId(req.params.id)}).toArray(function(e, results){
       if (e) { return next(e); }
-      res.send(result[0]);
+      res.send(results[0]);
     });
   })
 
@@ -122,19 +123,15 @@ router.route('/:collectionName/:id')
       return;
     }
     getUserFromKey(req.query.api_key, function(userName) {
-      req.collection.find({ _id: req.collection.id(req.params.id) }, {author:1}).toArray(function(e, results) {
+      req.collection.find({"_id": ObjectId(req.params.id)}, {author:1}).toArray(function(e, results) {
         if (!results[0] || results[0].author !== userName) {
 					res.status(403);
           res.send("You don't have permission to alter someone else's data!\r\n");
           return;
         }
         delete req.body._id; // <-- backbone sends the _id in the payload, but mongo doesn't wan it in the $set (-- @masondesu)
-        req.collection.update({_id: req.collection.id(req.params.id)}, {$set:req.body}, {safe:true, multi:false}, function(e, result){
-          req.collection.findOne({_id: req.collection.id(req.params.id)}, function(e, result){
-            if (e) { return next(e); }
-            res.send(result);
-          });
-        });
+        req.collection.update({_id: ObjectId(req.params.id)}, {$set:req.body}, {safe:true, multi:false});
+        res.send(req.collection.findOne({_id: ObjectId(req.params.id)}));
       });
     });
   })
@@ -147,15 +144,14 @@ router.route('/:collectionName/:id')
       return;
     }
     getUserFromKey(req.query.api_key, function(userName) {
-      req.collection.find({ _id: req.collection.id(req.params.id) }, {author:1}).toArray(function (e, results) {
+      req.collection.find({ _id: ObjectId(req.params.id) }, {author:1}).toArray(function (e, results) {
         if (!results[0] || results[0].author !== userName) {
 					res.status(403);
           res.send("You don't have permission to delete someone else's data!\r\n");
           return;
         }
-        req.collection.remove({_id: req.collection.id(req.params.id)}, function(e, result){
-          res.send((result===1)?{msg:'success'}:{msg:'error'});
-        });
+        var result = req.collection.remove({_id: ObjectId(req.params.id)});
+        res.send(result["Error"]?{msg:'error'}:{msg:'success'});
       });
     });
   });

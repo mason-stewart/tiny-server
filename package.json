@@ -14,7 +14,6 @@
     "jade": "~0.34.0",
     "method-override": "~2.3.1",
     "mongodb": "^2.0.45",
-    "mongoskin": "^2.0.0",
     "morgan": "~1.5.1",
     "serve-favicon": "~2.2.0"
   },

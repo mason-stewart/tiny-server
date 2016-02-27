@@ -1,13 +1,13 @@
 var express   = require('express'),
-    mongoskin = require('mongoskin'),
     router    = express.Router(),
-    db = mongoskin.db((process.env.MONGOLAB_URI || 'mongodb://localhost:27017/test'), {safe: true});
+    db = require('./../db'),
+    ObjectId = require('mongodb').ObjectID
 
     // Thanks to http://webapplog.com/tutorial-node-js-and-mongodb-json-rest-api-server-with-mongoskin-and-express-js/
     // for the cool help
 
   router.param('collectionName', function(req, res, next, collectionName) {
-    req.collection = db.collection(collectionName);
+    req.collection = db.get().collection(collectionName);
     next();
   });
 
@@ -33,30 +33,26 @@ var express   = require('express'),
 
     // GET /collections/:collectionName/:id
     .get(function(req, res, next) {
-      req.collection.findById(req.params.id, function(e, result){
+      req.collection.find({"_id": ObjectId(req.params.id)}).toArray(function(e, result){
         if (e) { return next(e); }
-        res.send(result);
+        res.send(result[0]);
       });
     })
 
     // PUT /collections/:collectionName/:id
     .put(function(req, res, next) {
       delete req.body._id; //<-- backbone sends the _id in the payload, but mongo doesn't wan it in the $set (--@masondesu)
-      req.collection.updateById(req.params.id, {$set:req.body}, function(e, result){
+      req.collection.update({"_id": ObjectId(req.params.id)}, {$set:req.body});
+      req.collection.find({"_id": ObjectId(req.params.id)}).toArray(function(e, result){
         if (e) { return next(e); }
-        req.collection.findById(req.params.id, function(e, result){
-          if (e) { return next(e); }
-          res.send(result);
-        });
+        res.send(result[0]);
       });
     })
 
-    // DELETE /collections/:collectionName
+    // DELETE /collections/:collectionName/:id
     .delete(function(req, res, next) {
-      req.collection.removeById(req.params.id, function(e, result){
-        if (e) { return next(e); }
-        res.send((result===1)?{msg:'success'}:{msg:'error'});
-      });
+      var result = req.collection.remove({_id: ObjectId(req.params.id)});
+      res.send(result["Error"]?{"msg":"error"}:{"msg":"success"});
     });
 
   module.exports = router;
